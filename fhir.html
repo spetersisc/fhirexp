@@ -1,0 +1,249 @@
+<html>
+<head>
+<style>
+div.main {
+  -webkit-flex: 1;
+  -ms-flex: 1;
+  flex: 1;
+  min-width: 460px;
+  overflow: auto;
+  position: relative; 
+  margin: 0px 10px 10px 10px;
+}
+    a{
+        color:#00afab
+    }
+    h2{
+        color:#00afab
+    }
+div.sidepanel {
+  max-width: 200px;
+  min-width: 150px;
+  -webkit-flex: 1;
+  -ms-flex: 1;
+  flex: 1;
+  padding: 30px 30px 0 20px;
+  border-left: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(255, 255, 255, 0.08);
+  overflow: auto;
+    font-family: Gotham, "Helvetica Neue", Helvetica, Arial, "sans-serif";
+    font-size: 12px;
+  
+}
+  div.sidepanel ol{
+	margin-left: 10px;
+	padding-left: 0px;
+  }
+  div.sidepanel ol ul{
+	margin-left: 25px;
+	padding-left: 0px;
+  }
+div.infobox {
+    width: 95%;
+    margin-left: 5px;
+    background-color: #00b4ae;
+    padding: 1em;
+    border: 1px #2D2D2D;
+}
+div.welcome {
+  background: white;
+  left: 0;
+  right: 0;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  overflow: auto;
+  display: flex;
+  display: -webkit-flex;
+  display: -ms-flex;
+  background-attachment: local;
+  font-family: Gotham, "Helvetica Neue", Helvetica, Arial, "sans-serif";
+    
+  color: #173090;
+}
+div.welcome .tryipd {
+    font-family: Arial;
+    font-size: 14px;
+    margin: 10px 0px 30px 25px;
+    width: 630px;
+}
+div.welcome .tryipd a {
+    text-decoration: none;
+    color: #80CBC4;
+}
+
+
+</style>
+</head>
+<div>
+
+	<div class="welcome">
+<div class="main">
+<div class="isc">
+<a name="anchor_main">&nbsp;</a> <!--put in h1 just below so formats the same as bonus?? ***-->
+<img src="isc-images/iscls_logo.png" alt="" width="200" height="49" />
+<h1>Main Exercise: CDA to FHIR<sup>&reg;</sup> via SDA</h1>
+<h2>Introduction<a name="anchor1">&nbsp;</a></h2>
+<p>In this exercise we will transform an HL7 CDA document&nbsp;into&nbsp;a FHIR bundle and submit it to a FHIR resource repository via REST. First, we will use the built-in HealthShare XSLT transforms to convert the input CDA (C-CDA&nbsp;v1.1) to SDA. Then we will convert the SDA output from that transformation to a FHIR bundle using the HealthShare SDA-to-FHIR DTL pipeline.</p>
+<h2>Goals</h2>
+<p>By the end of this exercise, you should be able to:</p>
+<ul>
+<li>Identify how HealthShare handles CDA-to-SDA conversion</li>
+<li>Identify how the SDA-to-FHIR DTL pipeline works</li>
+<li>Use a REST client to retrieve FHIR resources</li>
+<li>Customize the DTL pipeline</li>
+</ul>
+<div class="infobox"><span style="color: yellow;">&#9888;</span>&nbsp;The following two sample productions are used in this exercise:
+<ul>
+<li>HSFHIR -&nbsp;A sample FHIR client production for generating RESTful FHIR requests and submitting them to a FHIR server</li>
+<li>HSFHIRSERVER - Represents&nbsp;HealthShare's&nbsp;FHIR Resource Repository, capable of receiving RESTful requests from FHIR clients</li>
+</ul>
+</div>
+</div>
+<a name="anchor2">&nbsp;</a>
+<h2>Configure&nbsp;CDA-to-SDA Transformation Process<a name="anchor5">&nbsp;</a></h2>
+<div class="isc">
+<p><span style="font-family: courier new, courier;">Workshop.CDAtoSDA</span> has already been added into the production and partially configured. This is&nbsp;a sample&nbsp;business process&nbsp;that transforms CDA input into SDA.&nbsp;We will finish configuring this component&nbsp;to&nbsp;send&nbsp;the SDA output to&nbsp;the right business process for conversion to FHIR.</p>
+<p>
+1.&nbsp;&nbsp;&nbsp; In the Management Portal, navigate to:&nbsp;<strong>Ensemble &gt; HSFHIR &gt; Configure &gt; Production</strong>.<br /> 2.&nbsp;&nbsp; &nbsp;Select&nbsp;<span style="font-family: courier new, courier;">Workshop.CDAtoSDA</span>. <br /> 3.&nbsp;&nbsp; &nbsp;In the right-hand pane of the window, set the following:</p>
+<ol style="list-style-type: lower-alpha;">
+<li>&nbsp;&nbsp;&nbsp; <strong>TargetConfigName</strong>: <em>HS.FHIR.FromSDA.DTL.Transaction.Process</em></li>
+</ol>
+<p>4.&nbsp;&nbsp; &nbsp;Click&nbsp;<strong>Apply</strong>.</p>
+<div class="infobox"><span style="color: yellow;">&#9888;</span>&nbsp;Please note that a built-in business service (<span style="font-family: courier new, courier;">EnsLib.File.PassthroughService</span>) for reading in files has already been added into the production and fully configured. This business service will pull data from the <span style="font-family: courier new, courier;">HSFHIR/CDA/Input</span> directory and send the CDA input to the <span style="font-family: courier new, courier;">Workshop.CDAtoSDA</span> business process for conversion to SDA.<br/><br/><span style="font-family: courier new, courier;">Workshop.CDAtoSDA</span> makes use of built-in&nbsp;XSLT transforms in HealthShare (<span style="font-family: courier new, courier;">CCDA-to-SDA.xsl</span>, in this case) for converting between CDA and SDA. Looking under the hood, it's a very simple class with just a few lines of code, centered around&nbsp;the following&nbsp;line:
+<br/><br/><center><img src="isc-images/CCDA-to-SDA.png" /><center> </div><br/>
+
+
+<h2>Configure FromSDA DTL Process<a name="anchor4">&nbsp;</a></h2>
+<p><span style="font-family: courier new, courier;">HS.FHIR.FromSDA.DTL.Transaction.Process</span> is a built-in business process that converts SDA into a FHIR resource bundle. This business process has already been added into the production and partially configured. We will now finish configuring this component.</p>
+<p>1.&nbsp;&nbsp; &nbsp;Select&nbsp;<span style="font-family: courier new, courier;">HS.FHIR.FromSDA.DTL.Transaction.Process</span>.<br /> 2.&nbsp;&nbsp; &nbsp;In the right-hand pane of the window, set the following:</p>
+<ol style="list-style-type: lower-alpha;">
+<li>&nbsp;&nbsp;&nbsp; <strong>TargetConfigName</strong>: <em>HS.FHIR.REST.Operation</em></li>
+<li>&nbsp;&nbsp;&nbsp; <strong>TransmissionMode</strong>: <em>transaction</em><strong>&nbsp;</strong></li>
+<li>&nbsp;&nbsp;&nbsp; <strong>FHIRFormat</strong>:&nbsp;<em>XML</em></li>
+</ol>
+<p>3.&nbsp;&nbsp; &nbsp;Click <strong>Apply</strong>.</p><br/>
+<h2>Configure HS.FHIR.REST.Operation<a name="anchor6">&nbsp;</a></h2>
+<p><span style="font-family: courier new, courier;">HS.FHIR.REST.Operation</span>&nbsp;has already been added into the production and partially configured. This is a built-in component for&nbsp;sending out&nbsp;FHIR Requests via REST.&nbsp;We will finish configuring this component&nbsp;by&nbsp;specifying&nbsp;where to send the FHIR Requests. <br /></p><p> 1.&nbsp;&nbsp; &nbsp;Select&nbsp;<span style="font-family: courier new, courier;">HS.FHIR.REST.Operation</span>&nbsp;in the production. Set the following: <br /></p>
+<ol style="list-style-type: lower-alpha;">
+<li>&nbsp;&nbsp;&nbsp; <strong>ServiceName</strong>:&nbsp;<em>HealthShareFHIR.Service </em></li>
+<li>&nbsp;&nbsp;&nbsp; <strong>FHIRVersion</strong>:&nbsp;<em>1.0.2 </em></li>
+</ol>
+<p>2.&nbsp;&nbsp; &nbsp;Click <strong>Apply</strong>.</p>
+<div class="infobox"><span style="color: yellow;">&#9888;</span>&nbsp;An HTTP Service Registry entry called HealthShareFHIR.Service has already been created and partially configured for you in the HSFHIR namespace. This service entry points&nbsp;to&nbsp;the REST endpoint on our sample FHIR Server (HSFHIRSERVER).</div>
+<p><br /> 3.&nbsp;&nbsp; &nbsp;Configure <span style="font-family: courier new, courier;">HealthShareFHIR.Service</span> in the Service Registry (in the HSFHIR namespace).&nbsp;</p>
+<ol style="list-style-type: lower-alpha;">
+<li>Navigate to:&nbsp;<strong>Home &gt; HealthShare &gt;&nbsp;Service Registry</strong>.</li>
+<li>Set the<strong> Service Type</strong> dropdown to <em>HTTP</em> and select <em>HealthShareFHIR.Service</em> in the table.<br/><br/><center><img src="isc-images/OpenServiceRegistry.png"/><br/><br/></center></li>
+<li>In the bottom pane of the window, set the <strong>Host</strong>&nbsp;field to the <strong>Environment Hostname</strong> value (e.g., <em>xxxxx-xxxxx.staging-isc.appsembler.com</em>)&nbsp;as specified on the lab launch page.<br/><br/><center><img src="isc-images/ConfigHostServiceRegistry.png"/><br/><br/></center></li>
+<li>Verify that <strong>Port</strong> is blank and<strong> URL</strong> is set to <em>/csp/healthshare/hsfhirserver/fhir</em>.</li>
+<li>Click <strong>Save</strong>.</li>
+</ol></br>
+<h2>Process CDA Input<a name="anchor7">&nbsp;</a></h2>
+<p>You will now test the entire data&nbsp;pipeline, which processes a CDA document (C-CDA v1.1) into a FHIR bundle transaction. </p><p> 1.&nbsp;&nbsp; &nbsp;On the lower left of this page, open <span style="font-family: courier new, courier;">HSFHIR/CDA</span> and copy and paste <span style="font-family: courier new, courier;">ccda.xml</span> into <span style="font-family: courier new, courier;">HSFHIR/CDA/Input</span>.<br/><center><img src="isc-images/CopyPasteCCDA.png"/></center> <br /> 2.&nbsp;&nbsp; &nbsp;Refresh the page. When the file disappears from the <span style="font-family: courier new, courier;">Input</span> directory,&nbsp;switch to&nbsp;the Management Portal.<br /> 3.&nbsp;&nbsp; &nbsp;Navigate to:&nbsp;<strong>Home &gt; Ensemble &gt; View &gt; Messages</strong>. <br /> 4.&nbsp;&nbsp; &nbsp;Refresh the page until the status on the most recent message in your production changes from&nbsp;<strong>Delivered</strong>&nbsp;to&nbsp;<strong>Complete</strong>. <br /> 5.&nbsp;&nbsp; &nbsp;Select the number in the&nbsp;<strong>Session</strong>&nbsp;column&nbsp;to view the message's Visual Trace.<br/><br/><center><img src="isc-images/CDAVisualTrace.png"/></center></p>
+<div class="infobox"><span style="color: yellow;">&#9888;</span>&nbsp; If the trace was successful, you should see a completed trace, with no errors and two warnings. <br /> <ul>
+<li>Examine the warnings. <em>What do you think they mean?</em></li>
+<li>Examine the <span style="font-family: courier new, courier;">HS.Message.ECRUpdateRequest</span> message produced by the <span style="font-family: courier new, courier;">Workshop.CDAtoSDA</span> process. <em>What does this message contain?</em></li>
+<li>Examine the <span style="font-family: courier new, courier;">Payload</span> on the&nbsp;outgoing Request message sent out through <span style="font-family: courier new, courier;">HS.FHIR.REST.Operation</span>. <em>Can you identify different FHIR resources that are contained in this FHIR bundle?</em></li>
+</ul>The execution of the <span style="font-family: courier new, courier;">FromSDA</span> DTL is modular. The DTL loops through each entry and calls the appropriate DTL based on the resource type. This keeps the DTL sizes manageable and avoids instantiating too big an object in memory. When the DTL process loops, if it doesn't find a transform that corresponds to an SDA element, it will just skip that element and log a warning. <br /> <br/>You may extend the DTL logic to accommodate data types not included with the product or to modify existing behavior; we will do that in a later step.</div>
+<p>6.&nbsp;&nbsp; &nbsp;Examine the Response message from the FHIR Server. Please note that each FHIR resource appearing in the Response message now has a unique <span style="font-family: courier new, courier;">fullurl</span> value assigned by the FHIR Server.<br /> 7.&nbsp;&nbsp; &nbsp;Select the <strong>View Full Contents</strong> link in the right-hand panel. This opens a separate page containing only the Response message content. Please leave this page open on the screen, as we will be making use of it in the subsequent steps.</p><br />
+<h2>Change the Output of the Payload (Optional)<a name="anchor8">&nbsp;</a></h2>
+<p><span style="font-family: courier new, courier;">HS.FHIR.FromSDA.DTL.Transaction.Process</span>&nbsp;has a property on it called&nbsp;<span style="font-family: courier new, courier;">FHIRFormat</span> which allows you to easily change the payload format on your pipeline.</p>
+<p>1.&nbsp;&nbsp; &nbsp;Open the Management Portal. <br /> 2.&nbsp;&nbsp; &nbsp;Navigate to:<strong>&nbsp;Ensemble &gt; Configure &gt; Production</strong>. <br /> 3.&nbsp;&nbsp; &nbsp;Select&nbsp;<span style="font-family: courier new, courier;">HS.FHIR.FromSDA.DTL.Transaction.Process</span>&nbsp;in your production. <br /> 4.&nbsp;&nbsp; &nbsp;In the right-hand pane of the window, set <strong>FHIRFormat</strong> to <em>JSON</em> and&nbsp;click <strong>Apply</strong>. <br /> 5.&nbsp;&nbsp; &nbsp;Repeat the&nbsp;<strong>Process&nbsp;CDA Input</strong>&nbsp;section of this exercise to test the entire pipeline again, this time with JSON being the payload format.</p>
+<div class="infobox"><span style="color: yellow;">&#9888;</span>&nbsp;Note the difference in the output from the process. <br /> Also note that the receiving server does not care whether it receives XML or JSON. This is a requirement of the FHIR specification; all servers MUST handle both XML and JSON.</div><br/>
+<h2>Install and Launch Chrome Advanced REST Client<a name="anchor9">&nbsp;</a></h2>
+<p>We will use a REST client to query the FHIR Server. This exercise uses the Chrome Advanced REST Client as an example; however, please feel free to use any other REST client of your choice. </p><p>1.&nbsp;&nbsp; &nbsp; Navigate to the <a href="https://chrome.google.com/webstore/detail/advanced-rest-client/hgmloofddffdnphfgcellkdfbfbjeloo?hl=en-US&utm_source=chrome-ntp-launcher" target="_blank">Advanced REST Client</a> app using Chrome.<br/><center><img src="isc-images/RESTClientInstall.png"/></center>
+<br/>2.&nbsp;&nbsp; &nbsp; Install and launch the app.</p><br />
+<h2>Query the FHIR Server for Patient Resource<a name="anchor10">&nbsp;</a></h2>
+<p>In the <strong>Process CDA Input</strong> section of this exercise, we converted a CDA document into a FHIR bundle and posted it to our sample FHIR Server via REST. In this section, we will use an external REST client application to query the FHIR Server (FHIR Resource Repository) for FHIR resources previously posted.</p><p>1.&nbsp;&nbsp; &nbsp;Revisit&nbsp;the Response message's Full Contents page from the Process CDA Input section. <br /> 2.&nbsp;&nbsp; &nbsp;Locate the <span style="font-family: courier new, courier;">Patient</span> resource in the message payload and copy its <strong>fullurl</strong> value (e.g., <em>http://&lt;hostname&gt;/csp/healthshare/HSFHIRserver/FHIR/Patient/1</em>) <br /> 3.&nbsp;&nbsp; &nbsp;Open Chrome's Advanced REST Client. <br /> 4.&nbsp;&nbsp; &nbsp;In the REST Client window, set the URL to the Patient <strong>fullurl</strong> value that you just copied. <br /> 5.&nbsp;&nbsp; &nbsp;Add a new header called <strong>Authorization</strong> and&nbsp;construct&nbsp;its value with the following user credentials:</p>
+<ol style="list-style-type: lower-alpha;">
+<li><strong>Username:</strong> <em>HS_Services </em></li>
+<li><strong>Password:</strong> <em>HS_Services</em></li>
+</ol>
+<div><br/><center><img src="isc-images/rest_info.jpg" /><center> </div>
+<p>6.&nbsp;&nbsp; &nbsp;Add a new header called <strong>Accept</strong> and set it to <em>application/xml+fhir</em>. <br /> 7.&nbsp;&nbsp; &nbsp;Ensure that the transaction type is <span style="font-family: courier new, courier;">GET</span>. <br /> 8.&nbsp;&nbsp; &nbsp;Click <strong>Send</strong>. <br/> <center><img src="isc-images/QueryPatientResource.png"/></center><br/> 9.&nbsp;&nbsp; &nbsp;Examine the Response message containing the requested Patient resource. <br /> 10.&nbsp;&nbsp; &nbsp;Change&nbsp;the <strong>Accept</strong> header to <em>application/json+fhir</em> and click <strong>Send</strong>.&nbsp;The Response message now&nbsp;contains the same Patient resource expressed in JSON. <br /> 11.&nbsp;&nbsp; &nbsp;Modify the URL by appending <span style="font-family: courier new, courier;">/$everything</span>&nbsp;to the end.&nbsp;<br/><br/><center><img src="isc-images/everythingURL.png"/></center> <br /> 12.&nbsp;&nbsp; &nbsp;Click <strong>Send</strong> and notice that the <span style="font-family: courier new, courier;">$everything</span> operation returns the Patient resource as well as all the other resources related to the given patient. <br /> 13.&nbsp;&nbsp; &nbsp;(Optional) Now, look through the Full Contents page again for different <strong>fullurl</strong> values and try querying for other resources, such as Condition and Encounter.</p><br/>
+<h2>Customize the DTL Transform Process (Optional)<a name="anchor11">&nbsp;</a></h2>
+<p>The DTL pipeline is designed to be extremely customizable, in order to accommodate additional resource support, variations in use cases, and support of extensions. Both individual resource DTLs as well as the overall message DTL can be overridden with custom versions. To create a custom DTL, you copy the desired DTL from the base <span style="font-family: courier new, courier;">HS.FHIR.DTL.FromSDA</span> package to your desired custom package and modify as needed. We will now do this.</p><p>1.&nbsp;&nbsp; &nbsp;In the Management Portal, open the Data Transformation Builder in the HSFHIR namespace (<strong>Ensemble &gt;&nbsp;Build &gt; Data Transformations</strong>). <br /> 2.&nbsp;&nbsp; &nbsp;Open the DTL,&nbsp;<span style="font-family: courier new, courier;">HS.FHIR.DTL.FromSDA.Encounter</span>. <br /> 3.&nbsp;&nbsp; &nbsp;Click&nbsp;<strong>Save As</strong>. Change the Package to&nbsp;<em>&lt;yourname&gt;.FHIR.DTL.FromSDA</em>. <br /> 4.&nbsp;&nbsp; &nbsp;In your new DTL, expand the <span style="font-family: courier new, courier;">text</span> property on the target message. <br /> 5.&nbsp;&nbsp; &nbsp;Select&nbsp;<strong>div</strong>. <br /> 6.&nbsp;&nbsp; &nbsp;In the&nbsp;<strong>-Add Action-</strong>&nbsp;dropdown menu at the top, select&nbsp;<strong>set</strong>. <br /> 7.&nbsp;&nbsp; &nbsp;Set the <strong>Value</strong> of the assign operation to <em>"&lt;p&gt;GLOBAL SUMMIT&nbsp;IS AWESOME&lt;/p&gt;";</em> make sure you include the quotes.<br/><center><img src="isc-images/SetDivDTL.png"/></center> <br /> 8.&nbsp;&nbsp; &nbsp;Expand the <span style="font-family: courier new, courier;">language</span> property. <br /> 9.&nbsp;&nbsp; &nbsp;Set&nbsp;<strong>value&nbsp;</strong>to&nbsp;<em>"en-us"</em>; again include the quotes. <br/><br/><center><img src="isc-images/setlanguage.png"/></center><br/>10.&nbsp;&nbsp; &nbsp;<strong>Compile&nbsp;</strong>your DTL. <br /> 11.&nbsp;&nbsp; &nbsp;Navigate back to your production. <br /> 12.&nbsp;&nbsp; &nbsp;Select&nbsp;<span style="font-family: courier new, courier;">HS.FHIR.FromSDA.DTL.Transaction.Process</span>. <br /> 13.&nbsp;&nbsp; &nbsp;Set the&nbsp;<strong>CustomDTLPackage</strong>&nbsp;field&nbsp;to&nbsp;<em>&lt;yourname&gt;.FHIR.DTL.FromSDA</em> and click <strong>Apply</strong>.<br/><br/><center><img src="isc-images/CustomDTLPackage.png"/></center></p>
+<div class="infobox"><span style="color: yellow;">&#9888;</span>&nbsp; The <span style="font-family: courier new, courier;">CustomDTLPackage</span> configuration allows you to specify&nbsp;the class package of a custom set of DTLs for alternate resource processing in FHIR.</div>
+<p>14.&nbsp;&nbsp; &nbsp;Repeat the&nbsp;<strong>Process CDA Input</strong>&nbsp;section of this exercise. Note the difference in the output from the process.</p><br />
+<h1>Bonus Exercise: HL7 v2 to FHIR Message Mapping<a name="anchor_bonus">&nbsp;</a></h1>
+<h2>Introduction<a name="anchorb1">&nbsp;</a></h2>
+<p>In this bonus exercise, we will do a basic mapping of an HL7 v2 ADT_A01 message to a FHIR message using DTLs.</p>
+<h2>Goals</h2>
+<p>At the end of this exercise, you should be able to: <br /> 
+<ul>
+<li>Identify the location and structure of the HL7 FHIR Wiki </li>
+<li>Understand how <span style="font-family: courier new, courier;">HS.Message.FHIR.Request</span> messages are structured </li>
+<li>Understand how FHIR Resource Bundles are structured for DTL purposes </li>
+<li>Create a payload from a resource container </li>
+<li>Manually change DTL output from XML to JSON</li></ul></p><br/>
+<h2>Examine HL7 v2 Mapping Rules in the HL7 FHIR Wiki<a name="anchorb2">&nbsp;</a></h2>
+<p>1.&nbsp;&nbsp; &nbsp;To locate the mapping&nbsp;guidelines, navigate to the <a href="https://www.hl7.org/fhir/" target="_blank">HL7 FHIR Wiki</a>. <br /> 2.&nbsp;&nbsp; &nbsp;Select the&nbsp;<strong>Resources&nbsp;</strong>tab. <br /> 3.&nbsp;&nbsp; &nbsp;Select the&nbsp;<strong>Alphabetical&nbsp;</strong>tab. <br /> 4.&nbsp;&nbsp; &nbsp;Select the <strong>MessageHeader</strong> resource. <br /> 5.&nbsp;&nbsp; &nbsp;Select the&nbsp;<strong>Mappings&nbsp;</strong>tab and scroll down to the "Mappings for HL7 v2 Mapping" section.</p>
+<div class="infobox"><span style="color: yellow;">&#9888;</span>&nbsp;These mappings detail the most common elements in a HL7 v2 message's MSH segment and how they map into the <span style="font-family: courier new, courier;">MessageHeader</span> resource of a FHIR message.</div>
+<p>6.&nbsp;&nbsp; &nbsp;Go back to the "Resource Index" section by selecting the Resources tab again, and select the&nbsp;<strong>Patient&nbsp;</strong>resource. <br /> 7.&nbsp;&nbsp; &nbsp;Select the&nbsp;<strong>Mappings&nbsp;</strong>tab and scroll down to the "Mappings for HL7 v2 Mapping" section.</p>
+<div class="infobox"><span style="color: yellow;">&#9888;</span>&nbsp;These mappings detail the most common elements in a HL7 v2 message's PID and NK1 segments and how they map into the <span style="font-family: courier new, courier;">Patient</span> resource of a FHIR message.</div><br/><center><img src="isc-images/v2Mappings.png"/></center><br/>
+<h2>View the DTL in the HSFHIR Namespace<a name="anchorb3">&nbsp;</a></h2>
+<p>1.&nbsp;&nbsp; &nbsp;Open the Management Portal. <br /> 2.&nbsp;&nbsp; &nbsp;Navigate to:&nbsp;<strong>Ensemble&nbsp;&gt;&nbsp;Build&nbsp;&gt;&nbsp;Data Transformations</strong>. <br /> 3.&nbsp;&nbsp; &nbsp;Click&nbsp;<strong>Open</strong>. <br /> 4.&nbsp;&nbsp; &nbsp;Select&nbsp;<strong>Workshop&nbsp;&gt;&gt;&nbsp;DTL&nbsp;&gt;&gt;&nbsp;ADTA01ToFHIR</strong>.</p>
+<div class="infobox"><span style="color: yellow;">&#9888;</span>&nbsp; This&nbsp;lab includes a pre-built DTL and subtransforms which partially map the basic structures from HL7 v2 to FHIR Resources. We will add more mappings to these existing transforms.</div>
+<p>5.&nbsp;&nbsp; &nbsp;Some important transaction metadata properties have already been specified for you in this DTL. Please examine each of the following:</p>
+<ol style="list-style-type: lower-alpha;">
+<li><strong> target.Interaction</strong>&nbsp;- This is the FHIR transaction type as defined in the specification. These transactions map to either REST CRUD operations or FHIR specific operations. Note that FHIR operation support in this release is limited and thus, does not fully support the Messaging paradigm.</li>
+<li><strong>target.Type</strong>&nbsp;- A FHIR transaction may only contain one top-level resource. Since we are sending multiple resources in this transaction, we are sending them within a bundle. As a result, the transaction's <span style="font-family: courier new, courier;">Type</span> property is also <em>Bundle</em>.</li>
+<li><strong>target.ContentType</strong>&nbsp;- This specifies which format the <span style="font-family: courier new, courier;">Payload</span> stream property should be created in. The options are <em>application/xml+fhir</em> or <em>application/json+fhir</em>.</li>
+</ol><center><img src="isc-images/ADTA01ToFHIRDTL.png"/></center><br/>
+<p>6.&nbsp;&nbsp; &nbsp;Drill down through the source and target message structures in the DTL.</p>
+<div class="infobox"><span style="color: yellow;">&#9888;</span>&nbsp;Note that the resources are all stored within&nbsp;<strong>ResourceContainer.Bundle.entry</strong>. The&nbsp;<span style="font-family: courier new, courier;">entry</span> property is a collection and each entry can contain only one&nbsp;<span style="font-family: courier new, courier;">resource</span>. For each segment of the DTL that you transform into a new resource, you need to specify a different index for the entry (e.g.,&nbsp;<em>[...].Bundle.entry.(x)</em> where x is the index). <br /><br/> Also, note how the DTL uses the <strong>subtransform</strong> action to map entire HL7 v2 segments (namely MSH, PID, PV1, and AL1) to&nbsp;corresponding subtransforms. We will examine the subtransforms in the next section.</div><br />
+<h2>Examine the MSH and PID Subtransforms (Optional)<a name="anchorb4">&nbsp;</a></h2>
+<p>This lab includes partially mapped subtransforms for different HL7 v2 segments. Let's examine two of them to see how the mappings are specified at the subtransform level.</p>
+<p>1.&nbsp;&nbsp; &nbsp;In the DTL Editor, open&nbsp;<strong>Workshop&nbsp;&gt;&gt;&nbsp;DTL&nbsp;&gt;&gt;&nbsp;Subtransform &gt;&gt; MSH</strong>. <br /> 2.&nbsp;&nbsp; &nbsp;In the DTL Editor, open <strong>Workshop &gt;&gt;&nbsp;DTL&nbsp;&gt;&gt;&nbsp;Subtransform &gt;&gt; PID</strong>.</p><br/>
+<h2>Process HL7 Input<a name="anchorb5">&nbsp;</a></h2>
+<p>1.&nbsp;&nbsp; &nbsp;On the lower left of this page, open <span style="font-family: courier new, courier;">HSFHIR/HL7</span> folders and copy and paste <span style="font-family: courier new, courier;">ADT_A01.txt</span> into <span style="font-family: courier new, courier;">HSFHIR/HL7/Input</span>.<br/><center><img src="isc-images/CopyHL7Input.png"/></center> <br /> 2.&nbsp;&nbsp; &nbsp;Refresh the page. When the file disappears from the&nbsp;<span style="font-family: courier new, courier;">Input</span>&nbsp;directory, open the Management Portal. <br /> 3.&nbsp;&nbsp; &nbsp;Navigate to:&nbsp;<strong>Ensemble&nbsp;&gt;&nbsp;View&nbsp;&gt;&nbsp;Messages</strong>. <br /> 4.&nbsp;&nbsp; &nbsp;Locate the most recent message trace from the&nbsp;<span style="font-family: courier new, courier;">EnsLib.HL7.Service.FileService</span>&nbsp;source. Select the number in the&nbsp;<span style="font-family: courier new, courier;">Session</span> column&nbsp;to view the message's Visual Trace. <br/><br/><center><img src="isc-images/HL7v2MessageTrace.png"/></center><br /> 5.&nbsp;&nbsp; &nbsp;Examine the&nbsp;first two messages (<span style="font-family: courier new, courier;">HL7.Message</span> and <span style="font-family: courier new, courier;">Request</span>) to see the pre- and post-transform message contents. <br /> 6.&nbsp;&nbsp; &nbsp;Select the Response message to view the payload received from the FHIR Server.</p><br/>
+<h2>Map AL1 to&nbsp;AllergyIntolerance<a name="anchorb6">&nbsp;</a></h2>
+<p>A skeletal sub-transform for the AL1 segment of the ADT_A01 has already been built for you. Try adding new mappings&nbsp;for AL1&nbsp;and running the transform again.</p>
+<p>1.&nbsp;&nbsp; &nbsp;In the DTL Editor,&nbsp;open&nbsp;<strong>Workshop&nbsp;&gt;&gt;&nbsp;DTL&nbsp;&gt;&gt;&nbsp;Subtransform &gt;&gt; AL1</strong>. <br /> 2.&nbsp;&nbsp; &nbsp;Try following the mapping guidelines for the&nbsp;<span style="font-family: courier new, courier;">AllergyIntolerance</span>&nbsp;resource in the <a href="https://www.hl7.org/fhir/allergyintolerance-mappings.html#v2" target="_blank">HL7 FHIR wiki</a> (e.g., AL1-4 for criticality). <br /> 3.&nbsp;&nbsp; &nbsp;Compile the&nbsp;AL1 subtransform after adding the new mapping(s). <br /> 4.&nbsp;&nbsp; &nbsp;Repeat the <strong>Process HL7 Input</strong> section of this exercise to see the difference in the output.</p><br/>
+<h2>Examine BPL<a name="anchorb7">&nbsp;</a></h2>
+<p>A sample BPL for invoking the DTL transform has been provided. This BPL invokes the <span style="font-family: courier new, courier;">ADTA01ToFHIR</span> DTL&nbsp;to transform&nbsp;an HL7 v2 message into a FHIR message and serializes the output before sending it out via <span style="font-family: courier new, courier;">HS.FHIR.REST.Operation</span>. To view it:</p>
+<p>1.&nbsp;&nbsp; &nbsp;Open the Management Portal. <br /> 2.&nbsp;&nbsp; &nbsp;Navigate to:&nbsp;<strong>Ensemble&nbsp;&gt;&nbsp;Build&nbsp;&gt;&nbsp;Business Processes</strong>. <br /> 3.&nbsp;&nbsp; &nbsp;Click&nbsp;<strong>Open</strong>. <br /> 4.&nbsp;&nbsp; &nbsp;Select&nbsp;<strong>Workshop&nbsp;&gt;&gt;&nbsp;BPL&nbsp;&gt;&gt;&nbsp;V2ToFHIR</strong>.</p>
+<div class="infobox"><span style="color: yellow;">&#9888;</span>&nbsp;If you are familiar with DTL, you already know that there are several ways to invoke a DTL transformation. We are using the BPL process in this case to help illustrate the steps that are needed. <br /> <ul><li>BPL Step 1 calls the transform and sets the target of the transform to be a property we have already defined in the BPL context, <span style="font-family: courier new, courier;">FHIRMessage</span>. At this point, the FHIR Request is created but cannot yet be transmitted to the business operation. This is because the message will only transmit the Payload stream, not the Resource objects. </li><li> BPL Step 2 calls the <span style="font-family: courier new, courier;">HS.Message.FHIR.Request</span> method, <span style="font-family: courier new, courier;">UpdatePayloadFromContainer()</span>, which serializes the Resource objects to the payload. This method will create JSON or XML payloads based on the <span style="font-family: courier new, courier;">ContentType</span> property of the Request message. That value has already been set in the DTL. </li><li> BPL Step 3 dispatches the FHIR Request to the <span style="font-family: courier new, courier;">HS.FHIR.REST.Operation</span>.</li></ul></div><br/>
+<h2>Change the Output to JSON (Optional)<a name="anchorb8">&nbsp;</a></h2>
+<p>1.&nbsp;&nbsp; &nbsp;Open <span style="font-family: courier new, courier;">Workshop.DTL.ADTA01ToFHIR</span> DTL in the Data Transformation Editor. <br /> 2.&nbsp;&nbsp; &nbsp;Locate the step where the property&nbsp;<span style="font-family: courier new, courier;">target.ContentType</span>&nbsp;is set. Change the value to <em>application/json+fhir</em>.<br/><center><img src="isc-images/ChangeDTLtoJSON.png"/></center> <br /> 3.&nbsp;&nbsp; &nbsp;Click the&nbsp;<strong>Compile&nbsp;</strong>button. <br /> 4.&nbsp;&nbsp; &nbsp;Repeat the <strong>Process HL7 Input</strong> section of this exercise to send the sample HL7 message through the interface&nbsp;again. <br /> 5.&nbsp;&nbsp; &nbsp;Note that the&nbsp;transformed message payload is&nbsp;now in JSON format.</p><br/>
+			</div>
+		</div>
+		<div class="sidepanel">
+			<h3>GS2017 FHIR Experience</h3>
+			<div class="article">
+				<h4><a href="#anchor_main">Main Exercise</a></h4>
+				<ol>
+					<li><a href="#anchor1">Introduction</a></li>
+					<li><a href="#anchor2">Configuration</a></li>
+					<ul>
+						<li><a href="#anchor5">CDA-to-SDA Process</a></li>
+						<li><a href="#anchor4">FromSDA DTL Process</a></li>
+						<li><a href="#anchor6">HS.FHIR.REST.Operation</a></li>
+					</ul>
+					<li><a href="#anchor7">Process CDA Input</a></li>
+					<li><a href="#anchor8">Change Output to JSON (Optional)</a></li>
+					<li><a href="#anchor9">Install REST Client</a></li>
+					<li><a href="#anchor10">Query FHIR Server</a></li>
+					<li><a href="#anchor11">Customize DTL (Optional)</a></li>
+				</ol>
+			</div>
+			<br />
+			<div class="article">
+				<h4><a href="#anchor_bonus">Bonus Exercise</a></h4>
+				<ol>
+					<li><a href="#anchorb1">Introduction</a></li>
+					<li><a href="#anchorb2">Examine FHIR Wiki</a></li>
+					<li><a href="#anchorb3">View DTL</a></li>
+					<li><a href="#anchorb4">Examine Subtransforms (Optional)</a></li>
+					<li><a href="#anchorb5">Process HL7 Input</a></li>
+					<li><a href="#anchorb6">Map AllergyIntolerance</a></li>
+					<li><a href="#anchorb7">Examine BPL</a></li>
+					<li><a href="#anchorb8">Change Output to JSON (Optional)</a></li>
+				</ol>
+			</div>
+		</div>
+	</div>
+</div>
+</div>
+</html>
